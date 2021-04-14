@@ -60,6 +60,8 @@ public class SecurityManagerModule extends AbstractInternalModule {
         
         new FunctionDef(UMaskFunction.FNS_GET_UMASK, UMaskFunction.class),
         new FunctionDef(UMaskFunction.FNS_SET_UMASK, UMaskFunction.class),
+
+        new FunctionDef(RenameAccountFunction.FNS_RENAME_ACCOUNT, RenameAccountFunction.class),
         
         new FunctionDef(GetPrincipalMetadataFunction.FNS_GET_ALL_ACCOUNT_METADATA_KEYS, GetPrincipalMetadataFunction.class),
         new FunctionDef(GetPrincipalMetadataFunction.FNS_GET_ACCOUNT_METADATA_KEYS, GetPrincipalMetadataFunction.class),
