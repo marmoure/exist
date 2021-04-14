@@ -61,7 +61,7 @@ public abstract class AbstractPrincipal implements Principal {
         this.name = name;
         if(collection != null) {
             try {
-                final Configuration _config_ = Configurator.parse(this, broker, collection, XmldbURI.create(name + ".xml"));
+                final Configuration _config_ = Configurator.parse(this, broker, collection, XmldbURI.create(id + ".xml"));
                 configuration = Configurator.configure(this, _config_);
             } catch (final EXistException e) {
                 throw new ConfigurationException(e);
@@ -135,7 +135,7 @@ public abstract class AbstractPrincipal implements Principal {
     public final void setCollection(DBBroker broker, Collection collection) throws ConfigurationException {
         if (collection != null) {
             Configurator.unregister(configuration);
-            final Configuration _config_ = Configurator.parse(this, broker, collection, XmldbURI.create(name + ".xml"));
+            final Configuration _config_ = Configurator.parse(this, broker, collection, XmldbURI.create(id + ".xml"));
             configuration = Configurator.configure(this, _config_);
         }
     }

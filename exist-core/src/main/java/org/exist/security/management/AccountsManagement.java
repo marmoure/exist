@@ -33,14 +33,17 @@ import org.exist.security.Account;
 public interface AccountsManagement {
 	
 	Account addAccount(Account account) throws PermissionDeniedException, EXistException, ConfigurationException;
-	
+
 	Account getAccount(String name);
+	Account getAccount(int id);
 
 	boolean hasAccount(Account account);
 	boolean hasAccount(String name);
+	boolean hasAccount(int id);
 
 	boolean hasAccountLocal(Account account);
 	boolean hasAccountLocal(String name);
+	boolean hasAccountLocal(int id);
 
 	boolean updateAccount(Account account) throws PermissionDeniedException, EXistException, ConfigurationException;
 	

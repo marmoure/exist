@@ -34,14 +34,17 @@ import org.exist.storage.DBBroker;
 public interface GroupsManagement {
 
 	Group addGroup(DBBroker broker, Group group) throws PermissionDeniedException, EXistException, ConfigurationException;
-	
+
 	Group getGroup(String name);
+	Group getGroup(int id);
 
 	boolean hasGroup(Group group);
 	boolean hasGroup(String name);
+	boolean hasGroup(int id);
 
 	boolean hasGroupLocal(Group group);
 	boolean hasGroupLocal(String name);
+	boolean hasGroupLocal(int id);
 
 	boolean updateGroup(Group group) throws PermissionDeniedException, EXistException, ConfigurationException;
 	

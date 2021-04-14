@@ -59,6 +59,8 @@ public abstract class AbstractRealm implements Realm, Configurable {
 
     protected final PrincipalDbByName<Account> usersByName = new PrincipalDbByName<>();
     protected final PrincipalDbByName<Group> groupsByName = new PrincipalDbByName<>();
+    protected final PrincipalDbById<Account> usersById = new PrincipalDbById<>();
+    protected final PrincipalDbById<Group> groupsById = new PrincipalDbById<>();
 
     private final SecurityManager sm;
     protected Configuration configuration;
@@ -157,10 +159,10 @@ public abstract class AbstractRealm implements Realm, Configurable {
             for(final Iterator<DocumentImpl> i = collectionAccounts.iterator(broker); i.hasNext(); ) {
                 final DocumentImpl doc = i.next();
                 final Configuration conf = Configurator.parse(broker.getBrokerPool(), doc);
-                final String name = conf.getProperty("name");
-                
-                usersByName.writeE(principalDb -> {
-                    if(name != null && !principalDb.containsKey(name)) {
+                final String id = conf.getProperty("id");
+
+                usersById.writeE(principalIdsDb -> {
+                    if(id != null && !principalIdsDb.containsKey(id)) {
                         //A account = instantiateAccount(this, conf);
                         final Account account;
                         try {
@@ -181,7 +183,9 @@ public abstract class AbstractRealm implements Realm, Configurable {
                         }
 
                         getSecurityManager().registerAccount(account);
-                        principalDb.put(account.getName(), account);
+                        principalIdsDb.put(account.getId(), account);
+                        usersByName.write(principalNamesDb -> principalNamesDb.put(account.getName(), account));
+
 
                         //set collection
                         if(account.getId() > 0) {
@@ -254,12 +258,13 @@ public abstract class AbstractRealm implements Realm, Configurable {
 
     //Accounts management methods
     public final Account registerAccount(final Account account) {
-        usersByName.write(principalDb -> {
-            if(principalDb.containsKey(account.getName())) {
+        usersById.write(principalIdDb -> {
+            if(principalIdDb.containsKey(account.getId())) {
                 throw new IllegalArgumentException("Account " + account.getName() + " exist.");
             }
 
-            principalDb.put(account.getName(), account);
+            principalIdDb.put(account.getId(), account);
+            usersByName.write(principalNamesDb -> principalNamesDb.put(account.getName(), account));
         });
 
         return account;
@@ -283,8 +288,18 @@ public abstract class AbstractRealm implements Realm, Configurable {
     }
 
     @Override
+    public Account getAccount(final int id) {
+        return usersById.read(principalDb -> principalDb.get(id));
+    }
+
+    @Override
     public boolean hasAccount(final String accountName) {
         return hasAccountLocal(accountName);
+    }
+
+    @Override
+    public boolean hasAccount(final int accountId) {
+        return hasAccountLocal(accountId);
     }
 
     @Override
@@ -294,7 +309,12 @@ public abstract class AbstractRealm implements Realm, Configurable {
 
     @Override
     public boolean hasAccountLocal(final Account account) {
-        return hasAccountLocal(account.getName());
+        return hasAccountLocal(account.getId());
+    }
+
+    @Override
+    public boolean hasAccountLocal(final int accountId) {
+        return usersById.read(principalDb -> principalDb.containsKey(accountId));
     }
 
     @Override
@@ -320,18 +340,32 @@ public abstract class AbstractRealm implements Realm, Configurable {
     }
 
     @Override
+    public boolean hasGroup(final int id) {
+        return hasGroupLocal(id);
+    }
+
+    @Override
     public boolean hasGroupLocal(final String groupName) {
         return groupsByName.read(principalDb -> principalDb.containsKey(groupName));
     }
 
     @Override
+    public boolean hasGroupLocal(final int groupId) {
+        return groupsById.read(principalDb -> principalDb.containsKey(groupId));
+    }
+
+    @Override
     public final boolean hasGroupLocal(final Group role) {
-        return hasGroupLocal(role.getName());
+        return hasGroupLocal(role.getId());
     }
 
     @Override
     public Group getGroup(final String name) {
         return groupsByName.read(principalDb -> principalDb.get(name));
+    }
+    @Override
+    public Group getGroup(final int id) {
+        return groupsById.read(principalDb -> principalDb.get(id));
     }
 
     @Override
@@ -379,7 +413,7 @@ public abstract class AbstractRealm implements Realm, Configurable {
         account.assertCanModifyAccount(user);
         
         //modify the account
-        final Account updatingAccount = getAccount(account.getName());
+        final Account updatingAccount = getAccount(account.getId());
         if(updatingAccount == null) {
             throw new PermissionDeniedException("account " + account.getName() + " does not exist");
         }
@@ -422,8 +456,26 @@ public abstract class AbstractRealm implements Realm, Configurable {
             }
         }
         
-
-        updatingAccount.save();
+        try {
+            updatingAccount.save();
+        } finally {
+            final String oldName = usersByName.read(usersDb -> {
+                for (final Account oldAccount : usersDb.values()) {
+                    for (Map.Entry<String, Account> entry : usersDb.entrySet()) {
+                        if (account.getId() == entry.getValue().getId()) {
+                            return entry.getKey();
+                        }
+                    }
+                }
+                return null;
+            });
+            usersByName.write(principalNamesDb -> {
+                if (oldName != null) {
+                    principalNamesDb.remove(oldName);
+                }
+                principalNamesDb.put(account.getName(), account);
+            });
+        }
 
         return true;
     }
@@ -526,6 +578,12 @@ public abstract class AbstractRealm implements Realm, Configurable {
     
     protected static class PrincipalDbByName<V extends Principal> extends ConcurrentValueWrapper<Map<String, V>> {
         public PrincipalDbByName() {
+            super(new HashMap<>(65));
+        }
+    }
+
+    protected static class PrincipalDbById<V extends Principal> extends ConcurrentValueWrapper<Map<Integer, V>> {
+        public PrincipalDbById() {
             super(new HashMap<>(65));
         }
     }

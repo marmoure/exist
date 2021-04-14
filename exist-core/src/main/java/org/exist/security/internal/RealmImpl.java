@@ -171,8 +171,8 @@ public class RealmImpl extends AbstractRealm {
             return false;
         }
         
-        usersByName.<PermissionDeniedException, EXistException>write2E(principalDb -> {
-            final AbstractAccount remove_account = (AbstractAccount)principalDb.get(account.getName());
+        usersById.<PermissionDeniedException, EXistException>write2E(principalIdsDb -> {
+            final AbstractAccount remove_account = (AbstractAccount)principalIdsDb.get(account.getId());
             if(remove_account == null){
                 throw new IllegalArgumentException("No such account exists!");
             }
@@ -195,7 +195,7 @@ public class RealmImpl extends AbstractRealm {
                 remove_account.setCollection(broker, collectionRemovedAccounts, XmldbURI.create(UUIDGenerator.getUUID()+".xml"));
 
                     try(final Txn txn = broker.continueOrBeginTransaction()) {
-                        collectionAccounts.removeXMLResource(txn, broker, XmldbURI.create( remove_account.getName() + ".xml"));
+                        collectionAccounts.removeXMLResource(txn, broker, XmldbURI.create( remove_account.getId() + ".xml"));
 
                         txn.commit();
                     } catch(final Exception e) {
@@ -203,7 +203,8 @@ public class RealmImpl extends AbstractRealm {
                     }
 
                 getSecurityManager().registerAccount(remove_account);
-                principalDb.remove(remove_account.getName());
+                principalIdsDb.remove(remove_account.getName());
+                usersByName.write(principalNamesDb -> principalNamesDb.remove(remove_account.getName()));
             }
         });
         
@@ -216,8 +217,8 @@ public class RealmImpl extends AbstractRealm {
             return false;
         }
         
-        groupsByName.<PermissionDeniedException, EXistException>write2E(principalDb -> {
-            final AbstractPrincipal remove_group = (AbstractPrincipal)principalDb.get(group.getName());
+        groupsById.<PermissionDeniedException, EXistException>write2E(principalIdsDb -> {
+            final AbstractPrincipal remove_group = (AbstractPrincipal)principalIdsDb.get(group.getName());
             if (remove_group == null) {
                 throw new IllegalArgumentException("Group does '" + group.getName() + "' not exist!");
             }
@@ -234,7 +235,7 @@ public class RealmImpl extends AbstractRealm {
             ((Group)remove_group).assertCanModifyGroup(subject);
 
             // check that this is not an active primary group
-            final Optional<String> isPrimaryGroupOf = usersByName.read(usersDb -> {
+            final Optional<String> isPrimaryGroupOf = usersById.read(usersDb -> {
                 for(final Account account : usersDb.values()) {
                     final Group accountPrimaryGroup = account.getDefaultGroup();
                     if (accountPrimaryGroup != null && accountPrimaryGroup.getId() == remove_group.getId()) {
@@ -251,7 +252,7 @@ public class RealmImpl extends AbstractRealm {
             remove_group.setCollection(broker, collectionRemovedGroups, XmldbURI.create(UUIDGenerator.getUUID() + ".xml"));
             try(final Txn txn = broker.continueOrBeginTransaction()) {
 
-                collectionGroups.removeXMLResource(txn, broker, XmldbURI.create(remove_group.getName() + ".xml" ));
+                collectionGroups.removeXMLResource(txn, broker, XmldbURI.create(remove_group.getId() + ".xml" ));
 
                 txn.commit();
             } catch (final Exception e) {
@@ -259,7 +260,8 @@ public class RealmImpl extends AbstractRealm {
             }
 
             getSecurityManager().registerGroup((Group)remove_group);
-            principalDb.remove(remove_group.getName());
+            principalIdsDb.remove(remove_group.getName());
+            groupsByName.write(principalNamesDb -> principalNamesDb.remove(group.getName()));
         });
         
         return true;
