@@ -43,7 +43,7 @@ import org.exist.storage.DBBroker;
 public class GroupAider implements Group {
 
 	private final String realmId;
-	private final String name;
+	private String name;
 	private final int id;
 	
 	private final List<Account> managers = new ArrayList<>();
@@ -74,6 +74,11 @@ public class GroupAider implements Group {
 	public String getName() {
 		return name;
 	}
+
+    @Override
+    public void setName(String newName) {
+        name = newName;
+    }
 
 	/* (non-Javadoc)
 	 * @see org.exist.security.Group#getId()

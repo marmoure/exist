@@ -73,10 +73,15 @@ public class EffectiveSubject implements Subject {
     public String getUsername() {
         return account.getUsername();
     }
-    
+
     @Override
     public String getName() {
         return account.getName();
+    }
+
+    @Override
+    public void setName(String name) {
+        account.setName(name);
     }
     
     @Override

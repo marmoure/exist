@@ -35,6 +35,8 @@ public interface Principal extends java.security.Principal, Configurable {
 
     int getId();
 
+    void setName(String name);
+
     Realm getRealm();
 
     String getRealmId();

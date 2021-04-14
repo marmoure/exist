@@ -44,7 +44,7 @@ public abstract class AbstractPrincipal implements Principal {
     private Realm realm;
 
     @ConfigurationFieldAsElement("name")
-    protected final String name;
+    protected String name;
 
     @ConfigurationFieldAsAttribute("id")
     protected final int id;
@@ -100,6 +100,11 @@ public abstract class AbstractPrincipal implements Principal {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public void setName(String newName) {
+        name = newName;
     }
 
     @Override

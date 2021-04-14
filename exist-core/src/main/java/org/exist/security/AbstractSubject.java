@@ -138,6 +138,11 @@ public abstract class AbstractSubject implements Subject {
     }
 
     @Override
+    public void setName(String name) {
+        account.setName(name);
+    }
+
+    @Override
     public boolean isConfigured() {
         return account.isConfigured();
     }

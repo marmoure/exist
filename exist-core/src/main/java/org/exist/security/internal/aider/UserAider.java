@@ -46,7 +46,7 @@ import org.exist.storage.DBBroker;
 public class UserAider implements Account {
     
     private final String realmId;
-    private final String name;
+    private String name;
     private final int id;
     private final Map<SchemaType, String> metadata = new HashMap<>();
     private String password = null;
@@ -86,6 +86,11 @@ public class UserAider implements Account {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public void setName(String newName) {
+        name = newName;
     }
 
     @Override
