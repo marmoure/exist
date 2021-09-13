@@ -86,8 +86,7 @@ public class XQueryWatchDog {
     }
 
     private void configureDefaults() {
-    	final DBBroker broker = context.getBroker();
-        final Configuration conf = broker.getBrokerPool().getConfiguration();
+        final Configuration conf = context.getConfiguration();
         Object option = conf.getProperty(PROPERTY_QUERY_TIMEOUT);
         if(option != null)
             {timeout = (Long) option;}
@@ -109,7 +108,7 @@ public class XQueryWatchDog {
 		}
 		if (LOG.isDebugEnabled()) {
 			final NumberFormat nf = NumberFormat.getNumberInstance();
-			LOG.debug("timeout set from option: " + nf.format(timeout) + " ms.");
+            LOG.debug("timeout set from option: {} ms.", nf.format(timeout));
 		}
     }
 
@@ -132,7 +131,7 @@ public class XQueryWatchDog {
 		}
 		if (LOG.isDebugEnabled()) {
 			final NumberFormat nf = NumberFormat.getNumberInstance();
-			LOG.debug("output-size-limit set from option: " + nf.format(maxNodesLimit));
+            LOG.debug("output-size-limit set from option: {}", nf.format(maxNodesLimit));
 		}
     }
     
@@ -150,8 +149,7 @@ public class XQueryWatchDog {
                 if(expr == null)
                     {expr = context.getRootExpression();}
                 final NumberFormat nf = NumberFormat.getNumberInstance();
-                LOG.warn("Query exceeded predefined timeout (" + nf.format(elapsed) + " ms.): " +
-                        ExpressionDumper.dump(expr));
+                LOG.warn("Query exceeded predefined timeout ({} ms.): {}", nf.format(elapsed), ExpressionDumper.dump(expr));
                 cleanUp();
                 throw new TerminatedException.TimeoutException(expr.getLine(), expr.getColumn(),
                         "The query exceeded the predefined timeout and has been killed.");
@@ -165,8 +163,7 @@ public class XQueryWatchDog {
             if(expr == null)
                 {expr = context.getRootExpression();}
             final NumberFormat nf = NumberFormat.getNumberInstance();
-            LOG.warn("Query exceeded predefined output-size-limit (" +  nf.format(maxNodesLimit) + ") for document fragments: " + 
-                    ExpressionDumper.dump(expr));
+            LOG.warn("Query exceeded predefined output-size-limit ({}) for document fragments: {}", nf.format(maxNodesLimit), ExpressionDumper.dump(expr));
             cleanUp();
             throw new TerminatedException.SizeLimitException(expr.getLine(), expr.getColumn(),
                     "The constructed document fragment exceeded the predefined output-size-limit (current: " +

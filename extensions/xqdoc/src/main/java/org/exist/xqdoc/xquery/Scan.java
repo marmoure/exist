@@ -116,7 +116,7 @@ public class Scan extends BasicFunction {
                     XmldbURI resourceURI = XmldbURI.xmldbUriFor(uri);
                     try (final Collection collection = context.getBroker().openCollection(resourceURI.removeLastSegment(), LockMode.READ_LOCK)) {
                         if (collection == null) {
-                            LOG.warn("collection not found: " + resourceURI.getCollectionPath());
+                            LOG.warn("collection not found: {}", resourceURI.getCollectionPath());
                             return Sequence.EMPTY_SEQUENCE;
                         }
 
@@ -191,7 +191,7 @@ public class Scan extends BasicFunction {
             Source source = new ClassLoaderSource(NORMALIZE_XQUERY);
             XQueryContext xc = new XQueryContext(context.getBroker().getBrokerPool());
             try {
-                normalizeXQuery = xquery.compile(context.getBroker(), xc, source);
+                normalizeXQuery = xquery.compile(xc, source);
             } catch(final PermissionDeniedException e) {
                 throw new XPathException(this, e);
             }

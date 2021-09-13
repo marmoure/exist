@@ -445,7 +445,7 @@ public class NativeBroker extends DBBroker {
         for(final byte i : ALL_STORAGE_FILES) {
             final Paged paged = getStorage(i);
             if(paged == null) {
-                LOG.warn("Storage file is null: " + i);
+                LOG.warn("Storage file is null: {}", i);
                 continue;
             }
 
@@ -727,7 +727,7 @@ public class NativeBroker extends DBBroker {
                     }
                 }
             } catch(final CollectionConfigurationException cce) {
-                LOG.error("Could not load initial collection configuration for /db: " + cce.getMessage(), cce);
+                LOG.error("Could not load initial collection configuration for /db: {}", cce.getMessage(), cce);
             }
 
             return new Tuple2<>(true, rootCollection);
@@ -743,6 +743,10 @@ public class NativeBroker extends DBBroker {
             @EnsureLocked(mode=LockMode.WRITE_LOCK, type=LockType.COLLECTION) final XmldbURI collectionUri,
             final CollectionCache collectionCache, final Optional<Tuple2<Permission, Long>> creationAttributes)
             throws TriggerException, ReadOnlyException, PermissionDeniedException, LockException, IOException {
+
+        if(parentCollection != null && !parentCollection.getPermissionsNoLock().validate(getCurrentSubject(), Permission.WRITE)){
+            throw new PermissionDeniedException("No write permissions for " + parentCollection.getURI().getCollectionPath());
+        }
 
         final CollectionTrigger trigger;
         if(parentCollection == null) {
@@ -3689,7 +3693,7 @@ public class NativeBroker extends DBBroker {
                 try(final ManagedLock<ReentrantLock> collectionsDbLock = lockManager.acquireBtreeWriteLock(collectionsDb.getLockName())) {
                     collectionsDb.flush();
                 } catch(final LockException e) {
-                    LOG.error("Failed to acquire lock on " + FileUtils.fileName(collectionsDb.getFile()), e);
+                    LOG.error("Failed to acquire lock on {}", FileUtils.fileName(collectionsDb.getFile()), e);
                 }
                 notifySync();
                 pool.getIndexManager().sync();

@@ -86,7 +86,7 @@ public class Conditional extends Modification {
 		declareVariables(context);
 		if(compiled == null)
 			try {
-				compiled = xquery.compile(broker, context, source);
+				compiled = xquery.compile(context, source);
 			} catch (final IOException e) {
 				throw new EXistException("An exception occurred while compiling the query: " + e.getMessage());
 			}
@@ -106,7 +106,8 @@ public class Conditional extends Modification {
 			}
 			
 			if (LOG.isDebugEnabled())
-				{LOG.debug(mods + " modifications processed.");}
+				{
+                    LOG.debug("{} modifications processed.", mods);}
 			
 			return mods;
 		} else

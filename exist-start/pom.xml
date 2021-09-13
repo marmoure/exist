@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.exist-db</groupId>
         <artifactId>exist-parent</artifactId>
-        <version>5.3.0-SNAPSHOT</version>
+        <version>5.4.0-SNAPSHOT</version>
         <relativePath>../exist-parent</relativePath>
     </parent>
 
@@ -44,6 +44,19 @@
         <url>scm:git:https://github.com/exist-db/exist.git</url>
       <tag>HEAD</tag>
     </scm>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
@@ -80,7 +93,7 @@ The original license statement is also included below.]]></preamble>
                                 <header>${project.parent.relativePath}/LGPL-21-license.template.txt</header>
                                 <header>Mortbay-APACHE-2-license.template.txt</header>
                             </multi>
-                            <excludes/>
+                            <excludes />
                             <includes>
                                 <include>src/main/java/org/exist/start/Classpath.java</include>
                                 <include>src/main/java/org/exist/start/Main.java</include>
@@ -91,6 +104,24 @@ The original license statement is also included below.]]></preamble>
                     </licenseSets>
 
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>analyze</id>
+                        <goals>
+                            <goal>analyze-only</goal>
+                        </goals>
+                        <configuration>
+                            <failOnWarning>true</failOnWarning>
+                            <ignoredUnusedDeclaredDependencies>
+                                <ignoredUnusedDeclaredDependency>org.hamcrest:hamcrest:jar</ignoredUnusedDeclaredDependency>
+                            </ignoredUnusedDeclaredDependencies>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

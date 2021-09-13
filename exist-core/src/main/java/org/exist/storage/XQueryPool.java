@@ -43,6 +43,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.exist.security.Permission;
 import org.exist.security.PermissionDeniedException;
+import org.exist.source.DBSource;
 import org.exist.source.Source;
 import org.exist.util.Configuration;
 import org.exist.util.Holder;
@@ -104,8 +105,7 @@ public class XQueryPool implements BrokerPoolService {
                 .maximumSize(maxPoolSize)
                 .build();
 
-        LOG.info("QueryPool: " + "size = " + nf.format(maxPoolSize) + "; "
-                + "maxQueryStackSize = " + nf.format(maxQueryStackSize));
+        LOG.info("QueryPool: size = {}; maxQueryStackSize = {}", nf.format(maxPoolSize), nf.format(maxQueryStackSize));
     }
 
     /**
@@ -164,7 +164,7 @@ public class XQueryPool implements BrokerPoolService {
 
             if (!isCompiledQueryValid(broker, source, firstCompiledXQuery)) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug(source.pathOrShortIdentifier() + " is invalid, removing from XQuery Pool...");
+                    LOG.debug("{} is invalid, removing from XQuery Pool...", source.pathOrShortIdentifier());
                 }
 
                 // query is invalid, returning null will remove the entry from the cache
@@ -183,7 +183,9 @@ public class XQueryPool implements BrokerPoolService {
         }
 
         //check execution permission
-        source.validate(broker.getCurrentSubject(), Permission.EXECUTE);
+        if (source instanceof DBSource) {
+            ((DBSource) source).validate(Permission.EXECUTE);
+        }
 
         return borrowedCompiledQuery.value;
     }

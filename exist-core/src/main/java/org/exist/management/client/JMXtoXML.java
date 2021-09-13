@@ -52,6 +52,8 @@ import org.exist.management.Cache;
 import org.exist.management.CacheManager;
 import org.exist.management.impl.*;
 import org.exist.dom.memtree.MemTreeBuilder;
+import org.exist.start.CompatibleJavaVersionCheck;
+import org.exist.start.StartException;
 import org.exist.util.NamedThreadFactory;
 import org.exist.util.serializer.DOMSerializer;
 import org.w3c.dom.Element;
@@ -75,7 +77,7 @@ public class JMXtoXML {
                 aryObjectNames[i] = new ObjectName(objectNames[i]);
             }
         } catch (final MalformedObjectNameException | NullPointerException e) {
-            LOG.warn("Error in initialization: " + e.getMessage(), e);
+            LOG.warn("Error in initialization: {}", e.getMessage(), e);
         }
 
         CATEGORIES.put(categoryName, aryObjectNames);
@@ -166,7 +168,7 @@ public class JMXtoXML {
         this.connection = jmxc.getMBeanServerConnection();
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Connected to JMX server at " + url.toString());
+            LOG.debug("Connected to JMX server at {}", url.toString());
         }
     }
 
@@ -280,7 +282,7 @@ public class JMXtoXML {
 
         } catch (final Exception e) {
             e.printStackTrace();
-            LOG.warn("Could not generate XML report from JMX: " + e.getMessage());
+            LOG.warn("Could not generate XML report from JMX: {}", e.getMessage());
         }
         return (Element) builder.getDocument().getNode(1);
     }
@@ -339,7 +341,7 @@ public class JMXtoXML {
 
                 } catch (final Exception e) {
                     e.printStackTrace();
-                    LOG.warn("Could not generate XML report from JMX: " + e.getMessage());
+                    LOG.warn("Could not generate XML report from JMX: {}", e.getMessage());
                 }
                 return (Element) builder.getDocument().getNode(1);
             }
@@ -382,7 +384,7 @@ public class JMXtoXML {
                         serializeObject(builder, attrib);
                         builder.endElement();
                     } catch (final Exception e) {
-                        LOG.debug("exception caught: " + e.getMessage(), e);
+                        LOG.debug("exception caught: {}", e.getMessage(), e);
                     }
                 }
             }
@@ -471,6 +473,15 @@ public class JMXtoXML {
      * @param args program arguments
      */
     public static void main(final String[] args) {
+        try {
+            CompatibleJavaVersionCheck.checkForCompatibleJavaVersion();
+        } catch (final StartException e) {
+            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                System.err.println(e.getMessage());
+            }
+            System.exit(e.getErrorCode());
+        }
+
         final JMXtoXML client = new JMXtoXML();
         try {
             client.connect("localhost", 1099);

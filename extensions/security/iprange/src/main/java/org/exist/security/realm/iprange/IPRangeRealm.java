@@ -122,7 +122,7 @@ public class IPRangeRealm extends AbstractRealm {
                     "iprange[" + ipToTest + " ge number(start) and " + ipToTest + " le number(end)]/../name";
             final XQueryContext context = new XQueryContext(broker.getBrokerPool());
 
-            final CompiledXQuery compiled = queryService.compile(broker, context, query);
+            final CompiledXQuery compiled = queryService.compile(context, query);
 
             final Properties outputProperties = new Properties();
 
@@ -134,16 +134,16 @@ public class IPRangeRealm extends AbstractRealm {
             final String username = i.hasNext() ? i.nextItem().getStringValue() : "";
 
             if (i.hasNext()) {
-                LOG.warn("IP address " + ipAddress + " matched multiple ipranges. Using first result only.");
+                LOG.warn("IP address {} matched multiple ipranges. Using first result only.", ipAddress);
             }
 
             if (!username.isEmpty()) {
                 final Account account = getSecurityManager().getAccount(username);
                 if (account != null) {
-                    LOG.info("IPRangeRealm trying " + account.getName());
+                    LOG.info("IPRangeRealm trying {}", account.getName());
                     return new SubjectAccreditedImpl((AbstractAccount) account, ipAddress);
                 } else {
-                    LOG.info("IPRangeRealm couldn't resolve account for " + username);
+                    LOG.info("IPRangeRealm couldn't resolve account for {}", username);
                 }
 
             } else {

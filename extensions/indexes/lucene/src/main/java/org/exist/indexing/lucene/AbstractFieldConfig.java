@@ -140,9 +140,9 @@ public abstract class AbstractFieldConfig {
         final XQuery xquery = broker.getBrokerPool().getXQueryService();
         final XQueryContext context = new XQueryContext(broker.getBrokerPool());
         try {
-            return xquery.compile(broker, context, code);
+            return xquery.compile(context, code);
         } catch (XPathException | PermissionDeniedException e) {
-            LOG.error("Failed to compile expression: " + code + ": " + e.getMessage(), e);
+            LOG.error("Failed to compile expression: {}: {}", code, e.getMessage(), e);
             isValid = false;
             return null;
         }

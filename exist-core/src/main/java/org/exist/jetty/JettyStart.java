@@ -35,7 +35,9 @@ import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.exist.SystemProperties;
 import org.exist.http.servlets.ExistExtensionServlet;
+import org.exist.start.CompatibleJavaVersionCheck;
 import org.exist.start.Main;
+import org.exist.start.StartException;
 import org.exist.storage.BrokerPool;
 import org.exist.util.ConfigurationHelper;
 import org.exist.util.FileUtils;
@@ -88,6 +90,15 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
 
 
     public static void main(final String[] args) {
+        try {
+            CompatibleJavaVersionCheck.checkForCompatibleJavaVersion();
+        } catch (final StartException e) {
+            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                System.err.println(e.getMessage());
+            }
+            System.exit(e.getErrorCode());
+        }
+
         final JettyStart start = new JettyStart();
         start.run(args, null);
     }
@@ -210,7 +221,7 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
             DatabaseManager.registerDatabase(xmldb);
 
         } catch (final Exception e) {
-            logger.error("configuration error: " + e.getMessage(), e);
+            logger.error("configuration error: {}", e.getMessage(), e);
             e.printStackTrace();
             return;
         }
@@ -453,7 +464,7 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
                     logger.debug("BrokerPoolsAndJetty.ShutdownHook hook registered");
                 } catch (final IllegalArgumentException | IllegalStateException e) {
                     // Hook already registered, or Shutdown in progress
-                    logger.error("Unable to add BrokerPoolsAndJetty.ShutdownHook hook: " + e.getMessage(), e);
+                    logger.error("Unable to add BrokerPoolsAndJetty.ShutdownHook hook: {}", e.getMessage(), e);
                     throw e;
                 }
 
@@ -528,7 +539,7 @@ public class JettyStart extends Observable implements LifeCycle.Listener {
                 logger.debug("BrokerPoolsAndJetty.ShutdownHook hook unregistered");
             } catch (final IllegalStateException e) {
                 // Shutdown in progress
-                logger.warn("Unable to remove BrokerPoolsAndJetty.ShutdownHook hook: " + e.getMessage());
+                logger.warn("Unable to remove BrokerPoolsAndJetty.ShutdownHook hook: {}", e.getMessage());
             }
         });
         

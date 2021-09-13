@@ -22,6 +22,7 @@
 package org.exist.xquery;
 
 import org.exist.dom.QName;
+import org.exist.storage.DBBroker;
 import org.exist.xquery.functions.array.ArrayConstructor;
 import org.exist.xquery.pragmas.Optimize;
 import org.apache.logging.log4j.LogManager;
@@ -66,7 +67,8 @@ public class Optimizer extends DefaultExpressionVisitor {
 
     public Optimizer(XQueryContext context) {
         this.context = context;
-        this.rewriters = context.getBroker().getIndexController().getQueryRewriters(context);
+        final DBBroker broker = context.getBroker();
+        this.rewriters = broker != null ? broker.getIndexController().getQueryRewriters(context) : Collections.emptyList();
     }
 
     public boolean hasOptimized() {
@@ -87,7 +89,7 @@ public class Optimizer extends DefaultExpressionVisitor {
                     break;
                 }
             } catch (XPathException e) {
-                LOG.warn("Exception called while rewriting location step: " + e.getMessage(), e);
+                LOG.warn("Exception called while rewriting location step: {}", e.getMessage(), e);
             }
         }
 
@@ -116,7 +118,8 @@ public class Optimizer extends DefaultExpressionVisitor {
             // enclose it in an (#exist:optimize#) pragma.
             if (!(parent instanceof RewritableExpression)) {
             	if (LOG.isTraceEnabled())
-            		{LOG.trace("Parent expression of step is not a PathExpr: " + parent);}
+            		{
+                        LOG.trace("Parent expression of step is not a PathExpr: {}", parent);}
                 return;
             }
             hasOptimized = true;
@@ -134,9 +137,10 @@ public class Optimizer extends DefaultExpressionVisitor {
                 path.replace(locationStep, extension);
 
                 if (LOG.isTraceEnabled())
-                    {LOG.trace("Rewritten expression: " + ExpressionDumper.dump(parent));}
+                    {
+                        LOG.trace("Rewritten expression: {}", ExpressionDumper.dump(parent));}
             } catch (final XPathException e) {
-                LOG.warn("Failed to optimize expression: " + locationStep + ": " + e.getMessage(), e);
+                LOG.warn("Failed to optimize expression: {}: {}", locationStep, e.getMessage(), e);
             }
         } else if (optimizePragma != null) {
             final ExtensionExpression extension = new ExtensionExpression(context);
@@ -183,11 +187,13 @@ public class Optimizer extends DefaultExpressionVisitor {
             final Expression parent = filtered.getParent();
             if (!(parent instanceof RewritableExpression)) {
             	if (LOG.isTraceEnabled())
-            		{LOG.trace("Parent expression: " + parent.getClass().getName() + " of step does not implement RewritableExpression");}
+            		{
+                        LOG.trace("Parent expression: {} of step does not implement RewritableExpression", parent.getClass().getName());}
                 return;
             }
             if (LOG.isTraceEnabled())
-                {LOG.trace("Rewriting expression: " + ExpressionDumper.dump(filtered));}
+                {
+                    LOG.trace("Rewriting expression: {}", ExpressionDumper.dump(filtered));}
             hasOptimized = true;
             final RewritableExpression path = (RewritableExpression) parent;
             try {
@@ -198,7 +204,7 @@ public class Optimizer extends DefaultExpressionVisitor {
                 // Replace the old expression with the pragma
                 path.replace(filtered, extension);
             } catch (final XPathException e) {
-                LOG.warn("Failed to optimize expression: " + filtered + ": " + e.getMessage(), e);
+                LOG.warn("Failed to optimize expression: {}: {}", filtered, e.getMessage(), e);
             }
         }
     }
@@ -225,7 +231,8 @@ public class Optimizer extends DefaultExpressionVisitor {
             Expression parent = and.getParent();
             if (!(parent instanceof PathExpr)) {
             	if (LOG.isTraceEnabled())
-            		{LOG.trace("Parent expression of boolean operator is not a PathExpr: " + parent);}
+            		{
+                        LOG.trace("Parent expression of boolean operator is not a PathExpr: {}", parent);}
                 return;
             }
             PathExpr path;
@@ -237,13 +244,14 @@ public class Optimizer extends DefaultExpressionVisitor {
                 path = (PathExpr) parent;
                 parent = path.getParent();
                 if (!(parent instanceof Predicate) || path.getLength() > 1) {
-                    LOG.debug("Boolean operator is not a top-level expression in the predicate: " + (parent == null ? "?" : parent.getClass().getName()));
+                    LOG.debug("Boolean operator is not a top-level expression in the predicate: {}", parent == null ? "?" : parent.getClass().getName());
                     return;
                 }
                 predicate = (Predicate) parent;
             }
             if (LOG.isTraceEnabled())
-                {LOG.trace("Rewriting boolean expression: " + ExpressionDumper.dump(and));}
+                {
+                    LOG.trace("Rewriting boolean expression: {}", ExpressionDumper.dump(and));}
             hasOptimized = true;
             final LocationStep step = (LocationStep) predicate.getParent();
             final Predicate newPred = new Predicate(context);
@@ -315,7 +323,7 @@ public class Optimizer extends DefaultExpressionVisitor {
                                     final Expression parent = ref.getParent();
                                     if (parent instanceof RewritableExpression) {
                                         if (LOG.isDebugEnabled()) {
-                                            LOG.debug(ref.getSource().toString() + " line " + ref.getLine() + ": inlining variable "+ ref.getName());
+                                            LOG.debug("{} line {}: inlining variable {}", ref.getSource().toString(), ref.getLine(), ref.getName());
                                         }
                                         ((RewritableExpression) parent).replace(ref, expression);
                                     }

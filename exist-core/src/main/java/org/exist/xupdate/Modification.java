@@ -166,7 +166,7 @@ public abstract class Modification {
 		declareVariables(context);
 		if(compiled == null)
 			try {
-				compiled = xquery.compile(broker, context, source);
+				compiled = xquery.compile(context, source);
 			} catch (final IOException e) {
 				throw new EXistException("An exception occurred while compiling the query: " + e.getMessage());
 			}
@@ -183,7 +183,8 @@ public abstract class Modification {
 			{throw new EXistException("select expression should evaluate to a node-set; got " +
 			        Type.getTypeName(resultSeq.getItemType()));}
 		if (LOG.isDebugEnabled())
-			{LOG.debug("found " + resultSeq.getItemCount() + " for select: " + selectStmt);}
+			{
+				LOG.debug("found {} for select: {}", resultSeq.getItemCount(), selectStmt);}
 		return resultSeq.toNodeSet();
 	}
 

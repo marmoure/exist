@@ -129,13 +129,13 @@ public class MimeTable {
     public MimeTable(final Path path) {
         if (Files.isReadable(path)) {
             try {
-                LOG.info("Loading mime table from file: " + path.toAbsolutePath().toString());
+                LOG.info("Loading mime table from file: {}", path.toAbsolutePath().toString());
                 try(final InputStream is = Files.newInputStream(path)) {
                     loadMimeTypes(is);
                 }
                 this.src = path.toUri().toString();
             } catch (final ParserConfigurationException | SAXException | IOException e) {
-                LOG.error(FILE_LOAD_FAILED_ERR + path.toAbsolutePath().toString(), e);
+                LOG.error(FILE_LOAD_FAILED_ERR + "{}", path.toAbsolutePath().toString(), e);
             }
         }
     }
@@ -250,7 +250,7 @@ public class MimeTable {
     
     private void load(final InputStream stream, final String src) {
         boolean loaded = false;
-        LOG.info("Loading mime table from stream: " + src);
+        LOG.info("Loading mime table from stream: {}", src);
         try {
         	loadMimeTypes(stream);
         	this.src=src;
@@ -274,12 +274,15 @@ public class MimeTable {
     }
 
     /**
-     * @param stream
-     * @throws SAXException 
-     * @throws ParserConfigurationException 
-     * @throws IOException 
+     * Load Mime Types
+     *
+     * @param stream input stream.
+     *
+     * @throws SAXException if an error occurs whilst reading the XML stream
+     * @throws ParserConfigurationException if an error occurs whilst parsing the stream
+     * @throws IOException if an error occurs whilst reading the stream
      */
-    private void loadMimeTypes(InputStream stream) throws ParserConfigurationException, SAXException, IOException {
+    private void loadMimeTypes(final InputStream stream) throws ParserConfigurationException, SAXException, IOException {
         final SAXParserFactory factory = ExistSAXParserFactory.getSAXParserFactory();
         factory.setNamespaceAware(true);
         factory.setValidating(false);
@@ -304,10 +307,7 @@ public class MimeTable {
         
         private MimeType mime = null;
         private final StringBuilder charBuf = new StringBuilder(64);
-        
-        /* (non-Javadoc)
-         * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
-         */
+
         @Override
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) throws SAXException {
@@ -363,10 +363,7 @@ public class MimeTable {
             }
             charBuf.setLength(0);
         }
-        
-        /* (non-Javadoc)
-         * @see org.xml.sax.helpers.DefaultHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
-         */
+
         @Override
         public void endElement(String uri, String localName, String qName)
                 throws SAXException {
@@ -395,25 +392,11 @@ public class MimeTable {
                 }
             }
         }
-        
-        /* (non-Javadoc)
-         * @see org.xml.sax.helpers.DefaultHandler#characters(char[], int, int)
-         */
+
         @Override
         public void characters(char[] ch, int start, int length)
                 throws SAXException {
             charBuf.append(ch, start, length);
-        }
-    }
-    
-    public static void main(String[] args) {
-        final MimeTable table = MimeTable.getInstance();
-        final MimeType type = table.getContentTypeFor("samples/xquery/fibo.svg");
-        if (type == null) {
-            System.out.println("Not found!");
-        } else {
-            System.out.println(type.getName());
-            System.out.println(type.getDescription());
         }
     }
 }
