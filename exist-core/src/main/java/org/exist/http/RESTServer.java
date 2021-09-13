@@ -1125,6 +1125,7 @@ public class RESTServer {
      * @throws PermissionDeniedException if the request has insufficient permissions
      * @throws NotFoundException if the request resource cannot be found
      * @throws IOException if an I/O error occurs
+     * @throws MethodNotAllowedException if the patch request is not permitted for the resource indicated
      */
     public void doPatch(final DBBroker broker, final Txn transaction, final XmldbURI path,
                       final HttpServletRequest request, final HttpServletResponse response)
@@ -1758,8 +1759,7 @@ public class RESTServer {
             // xml resource
 
             SAXSerializer sax = null;
-            final Serializer serializer = broker.getSerializer();
-            serializer.reset();
+            final Serializer serializer = broker.borrowSerializer();
 
             //setup the http context
             final HttpRequestWrapper reqw = new HttpRequestWrapper(request, formEncoding, containerEncoding);
@@ -1823,6 +1823,7 @@ public class RESTServer {
                 if (sax != null) {
                     SerializerPool.getInstance().returnObject(sax);
                 }
+                broker.returnSerializer(serializer);
             }
         }
     }
@@ -2181,53 +2182,54 @@ public class RESTServer {
             howmany = 0;
         }
 
-        final Serializer serializer = broker.getSerializer();
-        serializer.reset();
+        final Serializer serializer = broker.borrowSerializer();
         outputProperties.setProperty(Serializer.GENERATE_DOC_EVENTS, "false");
         try {
             serializer.setProperties(outputProperties);
-            final Writer writer = new OutputStreamWriter(response.getOutputStream(), outputProperties.getProperty(OutputKeys.ENCODING));
-            final JSONObject root = new JSONObject();
-            root.addObject(new JSONSimpleProperty("start", Integer.toString(start), true));
-            root.addObject(new JSONSimpleProperty("count", Integer.toString(howmany), true));
-            root.addObject(new JSONSimpleProperty("hits", Integer.toString(results.getItemCount()), true));
-            if (outputProperties.getProperty(Serializer.PROPERTY_SESSION_ID) != null) {
-                root.addObject(new JSONSimpleProperty("session",
-                        outputProperties.getProperty(Serializer.PROPERTY_SESSION_ID)));
-            }
-            root.addObject(new JSONSimpleProperty("compilationTime", Long.toString(compilationTime), true));
-            root.addObject(new JSONSimpleProperty("executionTime", Long.toString(executionTime), true));
-
-            final JSONObject data = new JSONObject("data");
-            root.addObject(data);
-
-            Item item;
-            for (int i = --start; i < start + howmany; i++) {
-                item = results.itemAt(i);
-                if (Type.subTypeOf(item.getType(), Type.NODE)) {
-                    final NodeValue value = (NodeValue) item;
-                    JSONValue json;
-                    if ("json".equals(outputProperties.getProperty("method", "xml"))) {
-                        json = new JSONValue(serializer.serialize(value), false);
-                        json.setSerializationDataType(JSONNode.SerializationDataType.AS_LITERAL);
-                    } else {
-                        json = new JSONValue(serializer.serialize(value));
-                        json.setSerializationType(JSONNode.SerializationType.AS_ARRAY);
-                    }
-                    data.addObject(json);
-                } else {
-                    final JSONValue json = new JSONValue(item.getStringValue());
-                    json.setSerializationType(JSONNode.SerializationType.AS_ARRAY);
-                    data.addObject(json);
+            try (Writer writer = new OutputStreamWriter(response.getOutputStream(), outputProperties.getProperty(OutputKeys.ENCODING))) {
+                final JSONObject root = new JSONObject();
+                root.addObject(new JSONSimpleProperty("start", Integer.toString(start), true));
+                root.addObject(new JSONSimpleProperty("count", Integer.toString(howmany), true));
+                root.addObject(new JSONSimpleProperty("hits", Integer.toString(results.getItemCount()), true));
+                if (outputProperties.getProperty(Serializer.PROPERTY_SESSION_ID) != null) {
+                    root.addObject(new JSONSimpleProperty("session",
+                            outputProperties.getProperty(Serializer.PROPERTY_SESSION_ID)));
                 }
+                root.addObject(new JSONSimpleProperty("compilationTime", Long.toString(compilationTime), true));
+                root.addObject(new JSONSimpleProperty("executionTime", Long.toString(executionTime), true));
+
+                final JSONObject data = new JSONObject("data");
+                root.addObject(data);
+
+                Item item;
+                for (int i = --start; i < start + howmany; i++) {
+                    item = results.itemAt(i);
+                    if (Type.subTypeOf(item.getType(), Type.NODE)) {
+                        final NodeValue value = (NodeValue) item;
+                        JSONValue json;
+                        if ("json".equals(outputProperties.getProperty("method", "xml"))) {
+                            json = new JSONValue(serializer.serialize(value), false);
+                            json.setSerializationDataType(JSONNode.SerializationDataType.AS_LITERAL);
+                        } else {
+                            json = new JSONValue(serializer.serialize(value));
+                            json.setSerializationType(JSONNode.SerializationType.AS_ARRAY);
+                        }
+                        data.addObject(json);
+                    } else {
+                        final JSONValue json = new JSONValue(item.getStringValue());
+                        json.setSerializationType(JSONNode.SerializationType.AS_ARRAY);
+                        data.addObject(json);
+                    }
+                }
+
+                root.serialize(writer, true);
+
+                writer.flush();
             }
-
-            root.serialize(writer, true);
-
-            writer.flush();
-            writer.close();
         } catch (final IOException | XPathException | SAXException e) {
             throw new BadRequestException("Error while serializing xml: " + e.toString(), e);
+        } finally {
+            broker.returnSerializer(serializer);
         }
     }
 

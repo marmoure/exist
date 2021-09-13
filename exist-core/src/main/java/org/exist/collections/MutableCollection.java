@@ -1152,8 +1152,8 @@ public class MutableCollection implements Collection {
         storeXMLInternal(transaction, broker, info, storeInfo -> {
             final CollectionConfiguration colconf = storeInfo.getDocument().getCollection().getConfiguration(broker);
             final XMLReader reader = getReader(broker, false, colconf);
-            storeInfo.setReader(reader, null);
             try {
+                storeInfo.setReader(reader, null);
                 reader.parse(new InputSource(new StringReader(data)));
             } catch(final IOException e) {
                 throw new EXistException(e);
@@ -1813,7 +1813,7 @@ public class MutableCollection implements Collection {
         // Get validation mode from static configuration
         final Configuration config = broker.getConfiguration();
         final String optionValue = (String) config.getProperty(XMLReaderObjectFactory.PROPERTY_VALIDATION_MODE);
-        final VALIDATION_SETTING validationMode = XMLReaderObjectFactory.convertValidationMode(optionValue);
+        final VALIDATION_SETTING validationMode = XMLReaderObjectFactory.VALIDATION_SETTING.fromOption(optionValue);
         
         // Restore default validation mode
         XMLReaderObjectFactory.setReaderValidationMode(validationMode, reader);

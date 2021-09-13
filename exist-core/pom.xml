@@ -59,7 +59,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.12.3</version>
+            <version>2.12.5</version>
         </dependency>
 
         <!-- dependency>
@@ -198,7 +198,7 @@
         <dependency>
             <groupId>org.fusesource.jansi</groupId>
             <artifactId>jansi</artifactId>
-            <version>2.3.3</version>
+            <version>2.3.4</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -240,9 +240,9 @@
         </dependency>
 
         <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>1.6</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>2.11.1</version>
         </dependency>
 
         <dependency>
@@ -456,17 +456,14 @@
         </dependency>
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>compile</scope>
-            <!-- scope>test</scope --> <!-- not just test scope, as needed for org.exist.test -->
-            <exclusions>
-                <exclusion>
-                    <!-- we ourselves have a test scoped dependency on a newer hamcrest... see below! -->
-                    <groupId>org.hamcrest</groupId>
-                    <artifactId>hamcrest-core</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
@@ -688,6 +685,7 @@
                                 <exclude>src/test/java/org/exist/xquery/functions/xmldb/XMLDBAuthenticateTest.java</exclude>
                                 <exclude>src/main/java/org/exist/xquery/functions/util/Eval.java</exclude>
                                 <exclude>src/main/java/org/exist/xquery/value/ArrayListValueSequence.java</exclude>
+                                <exclude>src/test/java/org/exist/xquery/value/BifurcanMapTest.java</exclude>
                                 <exclude>src/main/java/org/exist/xquery/value/AtomicValueComparator.java</exclude>
                                 <exclude>src/main/java/org/exist/xquery/value/ItemComparator.java</exclude>
                                 <exclude>src/main/java/org/exist/xquery/value/SequenceComparator.java</exclude>
@@ -828,6 +826,7 @@ The original license statement is also included below.]]></preamble>
                                 <include>src/test/java/org/exist/xquery/functions/xmldb/XMLDBAuthenticateTest.java</include>
                                 <include>src/main/java/org/exist/xquery/functions/util/Eval.java</include>
                                 <include>src/main/java/org/exist/xquery/value/ArrayListValueSequence.java</include>
+                                <include>src/test/java/org/exist/xquery/value/BifurcanMapTest.java</include>
                                 <include>src/main/java/org/exist/xquery/value/AtomicValueComparator.java</include>
                                 <include>src/main/java/org/exist/xquery/value/ItemComparator.java</include>
                                 <include>src/main/java/org/exist/xquery/value/SequenceComparator.java</include>
@@ -995,6 +994,18 @@ The BaseX Team. The original license statement is also included below.]]></pream
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junit.jupiter.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.vintage</groupId>
+                        <artifactId>junit-vintage-engine</artifactId>
+                        <version>${junit.vintage.version}</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <argLine>@{jacocoArgLine} -Dfile.encoding=${project.build.sourceEncoding}</argLine>
                     <systemPropertyVariables>
@@ -1051,7 +1062,20 @@ The BaseX Team. The original license statement is also included below.]]></pream
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.junit.jupiter</groupId>
+                                <artifactId>junit-jupiter-engine</artifactId>
+                                <version>${junit.jupiter.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.junit.vintage</groupId>
+                                <artifactId>junit-vintage-engine</artifactId>
+                                <version>${junit.vintage.version}</version>
+                            </dependency>
+                        </dependencies>
                         <configuration>
+                            <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
                             <forkCount>1C</forkCount>
                             <reuseForks>false</reuseForks>
                             <argLine>-Dfile.encoding=${project.build.sourceEncoding}</argLine>
